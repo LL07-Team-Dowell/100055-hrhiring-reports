@@ -45,13 +45,15 @@ def generate_report(request):
 
 @csrf_exempt
 def report(request):
-    response = targeted_population('hr_hiring','candidate_view',  ['candidate_data'], 'life_time')
-    print(response)
+  if request.method == 'POST':
+    Time_period = request.POST.get('Timeperiod')
+    response = targeted_population('hr_hiring','accounts_view',  ['application_details'],  Time_period )
     candidate=[]
     for i in response['normal']['data'][0]:
-        candidate.append(i['candidate_data']['applicant'])
-
-    return JsonResponse({"candidate":candidate})
+        candidate.append(i['application_details']['applicant'])
+    total_candidate = len(candidate)
+    print(total_candidate)
+  return JsonResponse({"candidate":candidate, "total_candidate":total_candidate})
 
 @csrf_exempt
 def timeperiod(request):
@@ -81,6 +83,34 @@ def mainpage(request):
     
     
     return render(request , 'main.html')
+
+@csrf_exempt
+def Candidate_report(request):
+    global total_pending_candidate
+    if request.method == 'POST':
+        Time_period = request.POST.get('Timeperiod')
+        response = targeted_population('hr_hiring','candidate_view',  ['candidate_data'], Time_period)
+        if response['normal']['is_error'] == True :
+              return render(request, 'main.html',context={"timeperiod":timeperiod})
+        else:
+         candidate_detail = [data['candidate_data'] for data in response['normal']['data'][0]]
+         def find__status(candidate_detail):
+         
+            Pending = []
+            for candidate in candidate_detail:
+                
+                if candidate ['status'] == "Pending":
+                          Pending.append(candidate )
+                
+         
+            total_pending_candidate = len(Pending)
+            data =[ total_pending_candidate]
+           
+            return data
+        candidate_status = find__status(candidate_detail)
+        print('candidate', candidate_status)
+        return JsonResponse({"status":   candidate_status })
+       
 
 
 @csrf_exempt
@@ -113,37 +143,9 @@ def hr_report(request):
         status = find__status(Task_detail)
         print('hrreport',status)
         return JsonResponse({"status":  status})
-      
-
-@csrf_exempt
-def account_report(request):
-    global total_hired_candidate
-    if request.method == 'POST':
-        Time_period = request.POST.get('Timeperiod')
-        response = targeted_population('hr_hiring','accounts_view',  ['application_details'], Time_period)
-        if response['normal']['is_error'] == True :
-              return render(request, 'main.html',context={"timeperiod":timeperiod})
-        else:
-         account_detail = [data['application_details'] for data in response['normal']['data'][0]]
-       
-        def find__status(account_detail):
-         
-            hired = []
-            for account in account_detail:
-                
-                if account['status'] == "hired":
-                          hired.append(account)
-                
-         
-            total_hired_candidate = len(hired) 
-            data =[ total_hired_candidate]
-           
-            return data
-        status = find__status(account_detail)
-        print('Hired',status)
-        return JsonResponse({"status":   status })
-
-
+    
+    
+    
 @csrf_exempt
 def Teamlead_report(request):
     global  team_lead_candidate
@@ -175,34 +177,38 @@ def Teamlead_report(request):
         
         
         
+
+
+
+      
+
 @csrf_exempt
-def Candidate_report(request):
-    global total_pending_candidate
+def account_report(request):
+    global total_hired_candidate
     if request.method == 'POST':
         Time_period = request.POST.get('Timeperiod')
-        response = targeted_population('hr_hiring','candidate_view',  ['candidate_data'], Time_period)
+        response = targeted_population('hr_hiring','accounts_view',  ['application_details'], Time_period)
         if response['normal']['is_error'] == True :
               return render(request, 'main.html',context={"timeperiod":timeperiod})
         else:
-         candidate_detail = [data['candidate_data'] for data in response['normal']['data'][0]]
-         def find__status(candidate_detail):
+         account_detail = [data['application_details'] for data in response['normal']['data'][0]]
+       
+        def find__status(account_detail):
          
-            Pending = []
-            for candidate in candidate_detail:
+            hired = []
+            for account in account_detail:
                 
-                if candidate ['status'] == "Pending":
-                          Pending.append(candidate )
+                if account['status'] == "hired":
+                          hired.append(account)
                 
          
-            total_pending_candidate = len(Pending)
-            data =[ total_pending_candidate]
+            total_hired_candidate = len(hired) 
+            data =[ total_hired_candidate]
            
             return data
-        candidate_status = find__status(candidate_detail)
-        print('candidate', candidate_status)
-        return JsonResponse({"status":   candidate_status })
-       
-
+        status = find__status(account_detail)
+        print('Hired',status)
+        return JsonResponse({"status":   status })
 
 
        
